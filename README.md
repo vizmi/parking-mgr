@@ -8,8 +8,8 @@
 - Drivers behave correctly and take the assigned spot 100% of the time
 - The most convenient parking spot is the one with the smallest number
 - The system should
--- assign the most convenient spot (smallest id available) 
--- Turn the driver away as no spots available
+  - assign the most convenient spot (smallest id available) 
+  - Turn the driver away as no spots available
 ## Non functional requirements
 - Lot can be very big
 - Simultaneous arrivals and leaves are limited to max 10 at the same time
@@ -23,7 +23,6 @@
 ## Service endpoints
 - lotId enter(LicPlate, size, color)
 - void exit(LicPlate)
-- Data status() - where data is { taken: x, free: y}
 
 ## Architecture:
 - 2 load balancer monitoring each other
