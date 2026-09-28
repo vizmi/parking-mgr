@@ -46,58 +46,39 @@ This means the "smallest available id, no double-booking" guarantee from the req
 -- Reservation transactions as conditional updates - reserve only if it is not taken, retry with the next otherwise
 -- configured with durability
 
-## build:
+## Setup
 
-start a local Redis: `docker compose up -d`
+```
+docker compose up -d      # local Redis; override with REDIS_URL for a real endpoint
+mvn clean compile
+mvn spring-boot:run
+```
 
-build: `mvn clean compile`
+## Tests
 
-run: `mvn spring-boot:run`
+```
+mvn test
+```
 
-To point at a different Redis (e.g. a managed instance), set `REDIS_URL` (e.g. `redis://default:<password>@<host>:<port>`) instead of running the local one.
-
-tests: `mvn test` (the concurrency test uses Testcontainers and needs Docker running)
-
-This project targets Java 17 (see `pom.xml`), and the test suite needs to actually run on 17 —
-Mockito's inline mock maker (ByteBuddy) fails on newer JDKs like 27 with
-`Could not initialize inline Byte Buddy mock maker`, because ByteBuddy can't yet parse a bare
-version string like `"27"`. If `java --version` on your machine reports something newer than 17,
-install a JDK 17 and point Maven at it for the test run instead of changing your shell default:
+Needs Docker (Testcontainers) and JDK 17 specifically — newer JDKs (e.g. 27) break Mockito's
+ByteBuddy mock maker:
 
 ```
 brew install openjdk@17
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
-mvn test
 ```
 
-Using [colima](https://colima.run) instead of Docker Desktop: on Apple Silicon Macs, start it with
+With [colima](https://colima.run) instead of Docker Desktop:
 
 ```
 colima start --cpu 4 --memory 8 --vm-type vz --mount-type virtiofs --vz-rosetta
-```
-
-`--vm-type vz` uses macOS's native Virtualization.framework instead of QEMU (faster, lower
-overhead), `--mount-type virtiofs` gives much faster host-filesystem access than the default
-sshfs, and `--vz-rosetta` lets the VM run x86_64 images (e.g. images without an arm64 build)
-through Rosetta instead of full emulation. `--cpu`/`--memory` just size the VM; adjust to what
-your machine can spare.
-
-Testcontainers doesn't pick up colima's socket automatically, and colima's socket forwarding
-breaks Testcontainers' Ryuk cleanup container (it tries to bind-mount the macOS-side socket path
-into a container running inside colima's Linux VM, where that path doesn't exist). Run:
-
-```
 export DOCKER_HOST=unix://$HOME/.colima/default/docker.sock
-export TESTCONTAINERS_RYUK_DISABLED=true
-mvn test
+export TESTCONTAINERS_RYUK_DISABLED=true   # colima's socket forwarding breaks Ryuk's cleanup container
 ```
 
-`TESTCONTAINERS_RYUK_DISABLED` just turns off the safety-net container that removes leftover
-containers if a test JVM crashes before cleaning up after itself — normal test runs still stop
-their containers on JVM shutdown. With Docker Desktop, neither variable is needed.
+## Manual smoke test (powershell)
 
-manual smoke test (powershell):
-
-`curl -Method Post -Body '{}' http://localhost:8080/enter/111`
-
-`curl -Method Post -Body '{}' http://localhost:8080/exit/111`
+```
+curl -Method Post -Body '{}' http://localhost:8080/enter/111
+curl -Method Post -Body '{}' http://localhost:8080/exit/111
+```
