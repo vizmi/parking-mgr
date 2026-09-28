@@ -48,14 +48,17 @@ This means the "smallest available id, no double-booking" guarantee from the req
 
 ## build:
 
-build: `mvn clean compile`
+start a local Redis: `docker compose up -d`
 
-configure redis password: `$Env:redis_password='changeme'`
+build: `mvn clean compile`
 
 run: `mvn spring-boot:run`
 
+To point at a different Redis (e.g. a managed instance), set `REDIS_URL` (e.g. `redis://default:<password>@<host>:<port>`) instead of running the local one.
 
-tests (powershell):
+tests: `mvn test` (the concurrency test uses Testcontainers and needs Docker running)
+
+manual smoke test (powershell):
 
 `curl -Method Post -Body '{}' http://localhost:8080/enter/111`
 
