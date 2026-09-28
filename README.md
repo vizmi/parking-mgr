@@ -58,6 +58,18 @@ To point at a different Redis (e.g. a managed instance), set `REDIS_URL` (e.g. `
 
 tests: `mvn test` (the concurrency test uses Testcontainers and needs Docker running)
 
+This project targets Java 17 (see `pom.xml`), and the test suite needs to actually run on 17 —
+Mockito's inline mock maker (ByteBuddy) fails on newer JDKs like 27 with
+`Could not initialize inline Byte Buddy mock maker`, because ByteBuddy can't yet parse a bare
+version string like `"27"`. If `java --version` on your machine reports something newer than 17,
+install a JDK 17 and point Maven at it for the test run instead of changing your shell default:
+
+```
+brew install openjdk@17
+export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+mvn test
+```
+
 Using [colima](https://colima.run) instead of Docker Desktop: on Apple Silicon Macs, start it with
 
 ```
