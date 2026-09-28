@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.resps.Tuple;
 
 @Service
@@ -14,19 +15,22 @@ public class PMService {
 
 	private static final Logger logger = LoggerFactory.getLogger(PMService.class);
 
-    @Value("${redis.url}")
-	private String url;
+	private final JedisPool jedisPool;
+	private final String emptyLots;
+	private final String filledLots;
 
-	@Value("${redis.empty.lots}")
-	private String emptyLots;
-
-	@Value("${redis.filled.lots}")
-	private String filledLots;
+	public PMService(JedisPool jedisPool,
+			@Value("${redis.empty.lots}") String emptyLots,
+			@Value("${redis.filled.lots}") String filledLots) {
+		this.jedisPool = jedisPool;
+		this.emptyLots = emptyLots;
+		this.filledLots = filledLots;
+	}
 
     public String enter(String licPlate) {
         logger.info("{} entering", licPlate);
 
-        try (Jedis jedis = new Jedis(url)) {
+        try (Jedis jedis = jedisPool.getResource()) {
             if (jedis.hexists(filledLots, licPlate))
                 throw new IllegalArgumentException("License plate %s already in the lot".formatted(licPlate));
             
@@ -44,7 +48,7 @@ public class PMService {
 
     public void exit(String licPlate) {
         logger.info("{} exiting", licPlate);
-        try (Jedis jedis = new Jedis(url)) {
+        try (Jedis jedis = jedisPool.getResource()) {
             String lot = jedis.hget(filledLots, licPlate);
             if (lot == null)
                 throw new IllegalStateException("Car with license plate %s not found in the parking lot".formatted(licPlate));

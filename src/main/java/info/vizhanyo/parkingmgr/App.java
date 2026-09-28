@@ -12,6 +12,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 
 @SpringBootApplication
 public class App implements ApplicationRunner {
@@ -22,17 +23,20 @@ public class App implements ApplicationRunner {
 		SpringApplication.run(App.class, args);
 	}
 
-	@Value("${redis.url}")
-	private String url;
+	private final JedisPool jedisPool;
+	private final String emptyLots;
+	private final String filledLots;
+	private final int lots;
 
-	@Value("${redis.empty.lots}")
-	private String emptyLots;
-
-	@Value("${redis.filled.lots}")
-	private String filledLots;
-
-	@Value("${lots}")
-	private int lots;
+	public App(JedisPool jedisPool,
+			@Value("${redis.empty.lots}") String emptyLots,
+			@Value("${redis.filled.lots}") String filledLots,
+			@Value("${lots}") int lots) {
+		this.jedisPool = jedisPool;
+		this.emptyLots = emptyLots;
+		this.filledLots = filledLots;
+		this.lots = lots;
+	}
 
 	@Override
 	public void run(ApplicationArguments arg0) throws Exception {
@@ -43,7 +47,7 @@ public class App implements ApplicationRunner {
 	}
 
 	private void fillLot() {
-		try (Jedis jedis = new Jedis(url)) {
+		try (Jedis jedis = jedisPool.getResource()) {
 			// Delete old data is any
 			jedis.del(emptyLots);
 			jedis.del(filledLots);
