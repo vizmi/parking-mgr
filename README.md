@@ -58,6 +58,21 @@ To point at a different Redis (e.g. a managed instance), set `REDIS_URL` (e.g. `
 
 tests: `mvn test` (the concurrency test uses Testcontainers and needs Docker running)
 
+Using [colima](https://colima.run) instead of Docker Desktop: Testcontainers doesn't
+pick up colima's socket automatically, and colima's socket forwarding breaks Testcontainers' Ryuk
+cleanup container (it tries to bind-mount the macOS-side socket path into a container running
+inside colima's Linux VM, where that path doesn't exist). Run:
+
+```
+export DOCKER_HOST=unix://$HOME/.colima/default/docker.sock
+export TESTCONTAINERS_RYUK_DISABLED=true
+mvn test
+```
+
+`TESTCONTAINERS_RYUK_DISABLED` just turns off the safety-net container that removes leftover
+containers if a test JVM crashes before cleaning up after itself — normal test runs still stop
+their containers on JVM shutdown. With Docker Desktop, neither variable is needed.
+
 manual smoke test (powershell):
 
 `curl -Method Post -Body '{}' http://localhost:8080/enter/111`
