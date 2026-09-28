@@ -58,10 +58,21 @@ To point at a different Redis (e.g. a managed instance), set `REDIS_URL` (e.g. `
 
 tests: `mvn test` (the concurrency test uses Testcontainers and needs Docker running)
 
-Using [colima](https://colima.run) instead of Docker Desktop: Testcontainers doesn't
-pick up colima's socket automatically, and colima's socket forwarding breaks Testcontainers' Ryuk
-cleanup container (it tries to bind-mount the macOS-side socket path into a container running
-inside colima's Linux VM, where that path doesn't exist). Run:
+Using [colima](https://colima.run) instead of Docker Desktop: on Apple Silicon Macs, start it with
+
+```
+colima start --cpu 4 --memory 8 --vm-type vz --mount-type virtiofs --vz-rosetta
+```
+
+`--vm-type vz` uses macOS's native Virtualization.framework instead of QEMU (faster, lower
+overhead), `--mount-type virtiofs` gives much faster host-filesystem access than the default
+sshfs, and `--vz-rosetta` lets the VM run x86_64 images (e.g. images without an arm64 build)
+through Rosetta instead of full emulation. `--cpu`/`--memory` just size the VM; adjust to what
+your machine can spare.
+
+Testcontainers doesn't pick up colima's socket automatically, and colima's socket forwarding
+breaks Testcontainers' Ryuk cleanup container (it tries to bind-mount the macOS-side socket path
+into a container running inside colima's Linux VM, where that path doesn't exist). Run:
 
 ```
 export DOCKER_HOST=unix://$HOME/.colima/default/docker.sock
